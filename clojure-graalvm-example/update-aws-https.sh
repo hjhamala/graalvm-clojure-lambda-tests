@@ -15,9 +15,9 @@ docker cp target/uberjar/server.jar graal-builder:server.jar
 docker exec graal-builder native-image -H:+ReportUnsupportedElementsAtRuntime -H:EnableURLProtocols=http,https -J-Xmx3G -J-Xms3G --no-server -jar server.jar --rerun-class-initialization-at-runtime=org.httpkit.client.SslContextFactory --rerun-class-initialization-at-runtime=org.httpkit.client.HttpClient
 
 docker cp graal-builder:server target/server
-docker exec cp $JAVA_HOME/jre/lib/amd64/libsunec.so $PWD
+docker cp graal-builder:/opt/graalvm-ce-1.0.0-rc9/jre/lib/amd64/libsunec.so target/libsunec.so
 docker cp graal-builder:libsunec.so target/libsunec.so
-zip -j target/bundle.zip src/bootstrap target/server
+zip -j target/bundle.zip src/bootstrap target/server target/libsunec.so
 
 TIMESTAMP=$(date +%s)
 echo $TIMESTAMP.zip > latest.tag
