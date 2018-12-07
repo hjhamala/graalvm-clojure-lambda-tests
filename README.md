@@ -14,9 +14,22 @@ Create Docker image for GraalVM compilation with command:
 docker build -t graal-build-img .
 ````
 
-Create API gateways by running update-aws.sh script in the application directories.
+Create API gateway by running 
+<pre>./update-aws.sh</pre> 
+script in the application directories.
 
-Run the tests with using test.sh script. 
+
+After the update script has run it prints the uri for testing the endpoint. Script also create endpoint.uri an latest.tag files 
+which are used by the testing scripts.
+
+Run the test with 
+<pre>./test.sh</pre>. 
+
+The tests work by updating the function code with the latest tag. This causes Lambda to cold start
+the next invocation. Curl is used to measure time for the cold start and result is written to cold.txt in format *http-code,time-in-seconds*. 
+Then the script makes five consecutive calls to the Lambda and writes the results to warm.txt. Use your preferred way to calculate statistics
+from the files.
+
  
 
 

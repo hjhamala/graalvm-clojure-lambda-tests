@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 set -eu
-aws lambda update-function-code --function-name python-test --s3-bucket=graal-s3-bucket-infrapipelinebucket-1mjccq5agtv9u --s3-key=1544111274.zip >> /dev/null
+ENDPOINT=$(cat endpoint.uri)
+TAG=$(cat latest.tag)
+BUCKET=$(aws ssm get-parameter --name=/graalvm-test/s3-artifact-bucket | jq -r '.Parameter.Value')
 
+for i in {1..1000}
+
+do
+aws lambda update-function-code --function-name python-test --s3-bucket=$BUCKET --s3-key=$TAG >> /dev/null
 sleep 0.1
-curl -s -o /dev/null -w "%{http_code},%{time_total}\n"  https://azqlj710cc.execute-api.eu-west-1.amazonaws.com/dev/helloWorld >> cold.txt
-
-for i in {1..5}; do curl -s -o /dev/null -w "%{http_code},%{time_total}\n"  https://azqlj710cc.execute-api.eu-west-1.amazonaws.com/dev/helloWorld >> warm.txt; done
+curl -s -o /dev/null -w "%{http_code},%{time_total}\n"  $ENDPOINT >> cold.txt
+    for i in {1..5}
+    do
+        curl -s -o /dev/null -w "%{http_code},%{time_total}\n"  $ENDPOINT >> warm.txt
+        done
+done
