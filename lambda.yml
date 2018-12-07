@@ -1,0 +1,144 @@
+Parameters:
+
+  LambdaRepositoryName:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: "/graalvm-test/s3-artifact-bucket"
+
+  LambdaTaskRoleArn:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: "/graalvm-test/lambda-task-role"
+
+  CodeTag:
+    Type: String
+
+  Runtime:
+    Type: String
+
+  FunctionName:
+    Type: String
+
+  Handler:
+    Type: String
+
+  Memory:
+    Type: String
+
+Resources:
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ""
+        - - "/aws/lambda/"
+          - !Ref FunctionName
+
+  Lambda:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: !Ref Handler
+      Role: !Ref LambdaTaskRoleArn
+      FunctionName: !Ref FunctionName
+      Code:
+        S3Bucket: !Ref LambdaRepositoryName
+        S3Key: !Ref CodeTag
+      Runtime: !Ref Runtime
+      Timeout: "10"
+      MemorySize: !Ref Memory
+      ReservedConcurrentExecutions: 1
+
+
+  ApiGatewayRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Ref FunctionName
+      EndpointConfiguration:
+        Types:
+        - EDGE
+
+  ApiGatewayResourceChannel:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - ApiGatewayRestApi
+        - RootResourceId
+      PathPart: helloWorld
+      RestApiId:
+        Ref: ApiGatewayRestApi
+
+  ApiGatewayMethodHelloWorldGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      RequestParameters: {}
+      ResourceId:
+        Ref: ApiGatewayResourceChannel
+      RestApiId:
+        Ref: ApiGatewayRestApi
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+          - ''
+          - - 'arn:'
+            - Ref: AWS::Partition
+            - ":apigateway:"
+            - Ref: AWS::Region
+            - ":lambda:path/2015-03-31/functions/"
+            - Fn::GetAtt:
+              - Lambda
+              - Arn
+            - "/invocations"
+      MethodResponses: []
+
+  ApiGatewayDeployment1528210814491:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: ApiGatewayRestApi
+      StageName: dev
+    DependsOn:
+    - ApiGatewayMethodHelloWorldGet
+
+  LambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+        - Lambda
+        - Arn
+      Action: lambda:InvokeFunction
+      Principal:
+        Fn::Join:
+        - ''
+        - - apigateway.
+          - Ref: AWS::URLSuffix
+      SourceArn:
+        Fn::Join:
+        - ''
+        - - 'arn:'
+          - Ref: AWS::Partition
+          - ":execute-api:"
+          - Ref: AWS::Region
+          - ":"
+          - Ref: AWS::AccountId
+          - ":"
+          - Ref: ApiGatewayRestApi
+          - "/*/*"
+Outputs:
+  ServiceEndpoint:
+    Description: URL of the service endpoint
+    Value:
+      Fn::Join:
+      - ''
+      - - https://
+        - Ref: ApiGatewayRestApi
+        - ".execute-api.eu-west-1."
+        - Ref: AWS::URLSuffix
+        - "/dev/"
+        - "helloWorld"

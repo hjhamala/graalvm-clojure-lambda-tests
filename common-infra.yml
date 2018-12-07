@@ -1,0 +1,38 @@
+Resources:
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+
+  LambdaTaskRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "lambda.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+
+  BucketNameExport:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/graalvm-test/s3-artifact-bucket"
+      Type: "String"
+      Value: !Ref ArtifactBucket
+
+  LambdaTaskRoleExport:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/graalvm-test/lambda-task-role"
+      Type: "String"
+      Value: !GetAtt LambdaTaskRole.Arn
