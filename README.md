@@ -31,6 +31,13 @@ Then the script makes five consecutive calls to the Lambda and writes the result
 from the files.
 
  
+## GraalVM HTTPS support
+There is example Dockerfile with HTTPS workarounds, you can use it to create Docker image for
+GraalVM compilation with command: 
+````
+docker build -f Dockerfile.https -t graal-build-img .
+````
+and then use script *update-aws-https.sh* to load compiled program to AWS Lambda.
 
 
 
