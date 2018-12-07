@@ -18,6 +18,13 @@ Create API gateways by running update-aws.sh script in the application directori
 
 Run the tests with using test.sh script. 
  
+## GraalVM HTTPS support
+There is example Dockerfile with HTTPS workarounds, you can use it to create Docker image for
+GraalVM compilation with command: 
+````
+docker build -f Dockerfile.https -t graal-build-img .
+````
+and then use script *update-aws-https.sh* to load compiled program to AWS Lambda.
 
 
 
